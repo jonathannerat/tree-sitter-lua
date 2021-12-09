@@ -40,13 +40,13 @@ Comments
   (comment)
 
   (comment)
-  (expression (string))
+  (expression (string (string_content)))
   (comment)
 
   (comment)
 
   (comment)
-  
+
   (comment)
-  (expression (string))
+  (expression (string (string_content)))
   (comment))

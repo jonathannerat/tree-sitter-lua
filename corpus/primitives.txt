@@ -21,19 +21,32 @@ with double brackets [[ a level 0 string completely ignored ]]
 a level 0 long literal string with comment token inside -> -- disabled comment
 ]]
 
+-- empty strings
+''
+""
+[[]]
+[=[]=]
+
 ---
 
 (program
-  (expression (string))
-  (expression (string))
+  (expression (string (string_content)))
+  (expression (string (string_content)))
 
-  (expression (string))
+  (expression (string (string_content)))
 
-  (expression (string))
+  (expression (string (string_content)))
 
-  (expression (string))
+  (expression (string (string_content)))
 
-  (expression (string)))
+  (expression (string (string_content)))
+
+  (comment)
+  (expression (string))
+  (expression (string))
+  (expression (string))
+  (expression (string))
+)
 
 ============================================
 Numeric constants
