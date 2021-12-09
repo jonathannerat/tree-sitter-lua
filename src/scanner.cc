@@ -36,97 +36,86 @@ namespace {
       int start_level = 0;
       int end_level = 0;
       bool has_content = false;
-      bool should_end_string = false;
+      bool is_multiline = false;
 
-      if (type == COMMENT || type == STRING_START) {
-        if (lexer->lookahead == '[') {
-          // Consume first appearance '['
+      if ((type == COMMENT || type == STRING_START) && lexer->lookahead == '[') {
+        // Consume first appearance '['
+        advance(lexer);
+
+        while (lexer->lookahead == '=') {
+          // Increment level count
+          ++start_level;
+
+          // Consume all '=' characters
           advance(lexer);
+        }
 
-          if (lexer->lookahead == '[' || lexer->lookahead == '=') {
-            if (type == COMMENT) has_content = true;
-
-            while (lexer->lookahead == '=') {
-              // Increment level count
-              ++start_level;
-
-              // Consume all '=' characters
-              advance(lexer);
-            }
-
-            if (lexer->lookahead == '[') {
-              // Consume last appearance of '['
-              advance(lexer);
-              if (type == STRING_START) {
-                lexer->result_symbol = type;
-                last_string.delimiter_level = start_level;
-                last_string.multiline = true;
-                return true;
-              }
-            }
+        if (lexer->lookahead == '[') {
+          is_multiline = type == COMMENT;
+          // Consume last appearance of '['
+          advance(lexer);
+          if (type == STRING_START) {
+            lexer->result_symbol = type;
+            last_string.delimiter_level = start_level;
+            last_string.multiline = true;
+            return true;
           }
         }
       }
 
       // keep consuming if content is multiline (has "[[" or derivatives at the start)
-      if ((type == COMMENT && has_content) || type == STRING_CONTENT) {
+      if ((type == COMMENT && is_multiline) || type == STRING_CONTENT) {
         end_level = type == COMMENT ? start_level : last_string.delimiter_level;
 
         while (lexer->lookahead != 0) {
-          if (lexer->lookahead == ']') {
-            lexer->mark_end(lexer);
-            advance(lexer);
-
-            if (lexer->lookahead == ']' || lexer->lookahead == '=') {
-              while (lexer->lookahead == '=' && end_level > 0) {
-                // Decrement level count
-                --end_level;
-
-                // Consume all '=' characters
-                advance(lexer);
-              }
-
-              if (lexer->lookahead == ']' && end_level == 0) {
-                lexer->result_symbol = type;
-                if (type == COMMENT) {
-                  advance(lexer);
-                  lexer->mark_end(lexer);
-
-                  return true;
-                } else if (has_content) {
-                  return true;
-                } else {
-                  advance(lexer);
-                  lexer->mark_end(lexer);
-                  should_end_string = true;
-
-                  break;
-                }
-              }
-            }
-          }
-
-          if (!should_end_string && lexer->lookahead != 0) {
+          if (lexer->lookahead != ']') {
             has_content = true;
             advance(lexer);
+            continue;
           }
+
+          lexer->mark_end(lexer);
+          advance(lexer);
+
+          while (lexer->lookahead == '=' && end_level > 0) {
+            // Decrement level count
+            --end_level;
+
+            // Consume all '=' characters
+            advance(lexer);
+          }
+
+          if (lexer->lookahead == ']' && end_level == 0) {
+            lexer->result_symbol = type;
+
+            if (type == COMMENT) {
+              advance(lexer);
+              lexer->mark_end(lexer);
+            } else if (!has_content){
+              advance(lexer);
+              lexer->mark_end(lexer);
+              lexer->result_symbol = STRING_END;
+            }
+
+            return true;
+          } else {
+            end_level = type == COMMENT ? start_level : last_string.delimiter_level;
+          }
+
+          if (lexer->lookahead != 0) has_content = true;
         }
       }
 
       // it's guaranteed that the next "]...]" string delimiter is valid
-      if (type == STRING_END || should_end_string) {
-        // we were trying to parse content, but we ended up at the end of the
-        // string, so we shouldn't advance anymore
-        if (!should_end_string) {
-          // consume first ']'
+      if (type == STRING_END) {
+        // consume first ']'
+        advance(lexer);
+
+        while (lexer->lookahead != ']')
           advance(lexer);
 
-          while (lexer->lookahead != ']')
-            advance(lexer);
-
-          // consume last ']'
-          advance(lexer);
-        }
+        // consume last ']'
+        advance(lexer);
 
         lexer->result_symbol = STRING_END;
         return true;

@@ -15,17 +15,20 @@ a level 2 long literal string
 with double brackets [[ a level 0 string completely ignored ]]
 ]==]
 
+[===[
+a level 3 long literal string
+with level 1 brackets inside [=[ a level 1 string completely ignored ]=]
+]===]
+
 "a string with comment token inside -> -- disabled comment"
 
 [[
 a level 0 long literal string with comment token inside -> -- disabled comment
 ]]
 
--- empty strings
-''
-""
-[[]]
-[=[]=]
+[=[[a level 1 long literal string with brackets surrounding content]]=]
+
+[=[]]=]
 
 ---
 
@@ -41,7 +44,27 @@ a level 0 long literal string with comment token inside -> -- disabled comment
 
   (expression (string (string_content)))
 
-  (comment)
+  (expression (string (string_content)))
+
+  (expression (string (string_content)))
+
+  (expression (string (string_content)))
+)
+
+============================================
+Literam empty strings (short/long)
+============================================
+
+''
+""
+[[]]
+[=[]=]
+[====[]====]
+
+---
+
+(program
+  (expression (string))
   (expression (string))
   (expression (string))
   (expression (string))
